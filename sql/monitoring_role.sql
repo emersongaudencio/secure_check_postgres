@@ -1,0 +1,22 @@
+show search_path; 
+create role monitoring nologin noinherit;
+
+show search_path; 
+grant usage on schema secure_check_postgres to monitoring;
+show search_path; 
+grant execute on function pg_settings() to monitoring;
+show search_path; 
+grant select on pg_settings to monitoring;
+show search_path; 
+grant execute on function pg_stat_activity() to monitoring;
+show search_path; 
+grant select on pg_stat_activity to monitoring;
+show search_path; 
+grant execute on function pg_tablespace() to monitoring;
+show search_path; 
+grant select on pg_tablespace to monitoring;
+show search_path; 
+grant execute on function pg_ls_dir(text) to monitoring;
+show search_path; 
+-- grant execute on function pg_freespacemap_relations() to monitoring;
+-- grant select on pg_freespacemap_relations to monitoring;
