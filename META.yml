@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name                        : check_postgres.pl
-version                     : 2.18.1
+version                     : 2.19.0
 abstract                    : Postgres monitoring script
 author:              
   - Greg Sabino Mullane <greg@endpoint.com>
@@ -30,7 +30,7 @@ recommends:
 provides:
   check_postgres:
     file                    : check_postgres.pl
-    version                 : 2.18.1
+    version                 : 2.19.0
 
 keywords:
   - Postgres
@@ -45,7 +45,7 @@ resources:
   license                   : http://bucardo.org/check_postgres/
   bugtracker                : http://bucardo.org/bugzilla/
   MailingList               : https://mail.endcrypt.com/mailman/listinfo/check_postgres
-  Repository                : http://bucardo.org/check_postgres.git/
+  Repository                : git://bucardo.org/check_postgres.git
 
 meta-spec:
   version                   : 1.4

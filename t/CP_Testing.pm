@@ -229,7 +229,7 @@ sub test_database_handle {
             if ($res !~ /$newuser/) {
                 $COM = qq{psql -d template1 -q -h "$host" -c "CREATE USER $newuser"};
                 system $COM;
-                $SQL = q{UPDATE pg_shadow SET usesuper='t' WHERE usename = '$newuser'};
+                $SQL = qq{UPDATE pg_shadow SET usesuper='t' WHERE usename = '$newuser'};
                 $COM = qq{psql -d postgres -q -h "$host" -c "$SQL"};
                 system $COM;
             }
@@ -240,7 +240,7 @@ sub test_database_handle {
             if ($res !~ /$newuser/) {
                 $COM = qq{psql -d template1 -q -h "$host" -c "CREATE USER $newuser"};
                 system $COM;
-                $SQL = q{UPDATE pg_shadow SET usesuper='t' WHERE usename = '$newuser'};
+                $SQL = qq{UPDATE pg_shadow SET usesuper='t' WHERE usename = '$newuser'};
                 $COM = qq{psql -d postgres -q -h "$host" -c "$SQL"};
                 system $COM;
             }
@@ -249,7 +249,7 @@ sub test_database_handle {
                 $SQL = qq{SELECT * FROM pg_language WHERE lanname = '$lang'};
                 $res = qx{psql -Ax -qt -d postgres -q -h "$host" -c "$SQL"};
                 if ($res !~ /$lang/) {
-                    my $createlang = $ENV{PGBINDIR} ? "$ENV{PGBINDIR}/createlang" : 'pg_ctl';
+                    my $createlang = $ENV{PGBINDIR} ? "$ENV{PGBINDIR}/createlang" : 'createlang';
                     $COM = qq{$createlang -d postgres -h "$host" $lang};
                     system $COM;
                     }
@@ -332,7 +332,7 @@ sub test_database_handle {
     $dbh->do('CREATE DATABASE ardala');
     $dbh->do('CREATE LANGUAGE plpgsql');
     $dbh->do('CREATE LANGUAGE plperlu');
-	$dbh->do("CREATE SCHEMA $fakeschema");
+    $dbh->do("CREATE SCHEMA $fakeschema");
     $dbh->{AutoCommit} = 0;
     $dbh->{RaiseError} = 1;
 
@@ -508,6 +508,7 @@ sub create_fake_pg_table {
     my $self = shift;
     my $name = shift || die;
     my $args = shift || '';
+    my $where = shift || '';
     my $dbh = $self->{dbh} || die;
     my $dbuser = $self->{testuser} || die;
     if ($self->schema_exists($dbh,$fakeschema)) {
@@ -523,7 +524,10 @@ sub create_fake_pg_table {
         $funcargs = qq{($funcargs)};
     }
 
-    $dbh->do("CREATE TABLE $fakeschema.$name AS SELECT * FROM $name$funcargs LIMIT 0");
+    my $SQL = "CREATE TABLE $fakeschema.$name AS SELECT * FROM $name$funcargs$where ";
+    $SQL .= $where ? 'LIMIT 1' : 'LIMIT 0';
+
+    $dbh->do($SQL);
 
     if ($args) {
         $self->drop_function_if_exists($fakeschema,$name,$args);
@@ -535,6 +539,28 @@ sub create_fake_pg_table {
     return;
 
 } ## end of create_fake_pg_table
+
+
+sub remove_fake_pg_table {
+
+    my $self = shift;
+    my $name = shift || die;
+    my $dbh = $self->{dbh} || die;
+    my $dbuser = $self->{testuser} || die;
+    if (! $self->schema_exists($dbh,$fakeschema)) {
+        ## No schema means no table!
+        return;
+    }
+
+    my $SQL = "DROP TABLE $fakeschema.$name";
+
+    $dbh->do($SQL);
+
+    $dbh->commit();
+
+    return;
+
+} ## end of remove_fake_pg_table
 
 
 sub get_fake_schema {
@@ -625,7 +651,8 @@ sub drop_table_if_exists {
     my $count = $dbh->selectall_arrayref($SQL)->[0][0];
     if ($count) {
         $dbh->{Warn} = 0;
-        $dbh->do("DROP TABLE $name CASCADE");
+        my $fullname = $schema ? "$schema.$name" : $name;
+        $dbh->do("DROP TABLE $fullname CASCADE");
         $dbh->{Warn} = 1;
         $dbh->commit();
     }
